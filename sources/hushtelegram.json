@@ -1,6 +1,6 @@
 [
     {
-        "name": "telegram-morphe-patches-"
+        "name": "morphe-patches"
     },
     {
         "user": "MorpheApp",
@@ -8,8 +8,8 @@
         "tag": "latest"
     },
     {
-        "user": "newuser7171",
-        "repo": "telegram-morphe-patches-",
+        "user": "SysAdminDoc",
+        "repo": "HushTelegram",
         "tag": "latest"
     }
 ]

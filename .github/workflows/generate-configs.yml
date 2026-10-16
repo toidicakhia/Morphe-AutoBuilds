@@ -21,7 +21,7 @@ jobs:
           
           # APKMirror configs
           echo '{"org":"disney","name":"disney-plus","type":"APK","arch":"universal","dpi":"nodpi","package":"com.disney.disneyplus","version":""}' > apps/apkmirror/disney-plus.json
-          echo '{"org":"facebook-2","name":"facebook","type":"APK","arch":"universal","dpi":"nodpi","package":"com.facebook.katana","version":""}' > apps/apkmirror/facebook.json
+          echo '{"org":"facebook-2","name":"facebook","type":"BUNDLE","arch":"arm64-v8a","dpi":"320-640dpi","package":"com.facebook.katana","version":""}' > apps/apkmirror/facebook.json
           echo '{"org":"duolingo","name":"duolingo","type":"APK","arch":"universal","dpi":"nodpi","package":"com.duolingo","version":""}' > apps/apkmirror/duolingo.json
           echo '{"org":"google-inc","name":"google-news","type":"APK","arch":"universal","dpi":"nodpi","package":"com.google.android.apps.magazines","version":""}' > apps/apkmirror/google-news.json
           echo '{"org":"facebook-2","name":"messenger","type":"APK","arch":"universal","dpi":"nodpi","package":"com.facebook.orca","version":""}' > apps/apkmirror/messenger.json

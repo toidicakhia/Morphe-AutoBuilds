@@ -2,7 +2,7 @@
   "patch_list": [
     {
       "app_name": "tiktok",
-      "source": "icysymmetra"
+      "source": "hushfeed"
     },
     {
       "app_name": "youtube",
@@ -18,7 +18,7 @@
     },
     {
       "app_name": "instagram",
-      "source": "piko"
+      "source": "hushgram"
     },
     {
       "app_name": "pinterest",
@@ -51,6 +51,10 @@
     {
       "app_name": "google-news",
       "source": "docbt"
+    },
+    {
+      "app_name": "facebook",
+      "source": "hushfacebook"
     },
     {
       "app_name": "messenger",
@@ -90,7 +94,7 @@
     },
     {
       "app_name": "threads",
-      "source": "zeldrisho"
+      "source": "hushthreads"
     },
     {
       "app_name": "crunchyroll",
@@ -98,7 +102,7 @@
     },
     {
       "app_name": "telegram",
-      "source": "newuser7171"
+      "source": "hushtelegram"
     },
     {
       "app_name": "documentscanner",

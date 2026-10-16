@@ -4,6 +4,6 @@
   "type": "APK",
   "arch": "universal",
   "dpi": "nodpi",
-  "package": "org.telegram.messenger",
+  "package": "org.telegram.messenger.web",
   "version": ""
 }
