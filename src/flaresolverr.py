@@ -97,7 +97,8 @@ def solve(url: str, timeout: int = 60) -> dict | None:
 class FlareSolverrResponse:
     """Response-like object for FlareSolverr results."""
 
-    def __init__(self, url: str, html: str, cookies: dict, status_code: int = 200):
+    def __init__(self, url: str, html: str, cookies: dict, status_code: int = 200,
+                 user_agent: str | None = None):
         self.url = url
         self._html = html
         self.cookies = cookies
@@ -105,6 +106,7 @@ class FlareSolverrResponse:
         self.content = html.encode("utf-8", errors="ignore")
         self.text = html
         self.headers = {}
+        self.user_agent = user_agent
 
     def raise_for_status(self):
         if self.status_code >= 400:
@@ -148,6 +150,7 @@ def get_with_bypass(url: str, session=None, headers: dict | None = None,
             url=result["url"],
             html=result["html"],
             cookies=result["cookies"],
+            user_agent=result.get("user_agent"),
         )
 
     logging.warning(f"All fetch methods failed for {url}")

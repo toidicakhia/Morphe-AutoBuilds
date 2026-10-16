@@ -46,13 +46,20 @@ def _cf_get(url, **kwargs):
     kwargs.setdefault("timeout", 20)
 
     def _via_trawl():
-        """Render the page through trawl and sync cookies to the session."""
+        """Render the page through trawl (or FlareSolverr) and sync cookies."""
         from src import trawl
 
         rendered = trawl.fetch(url)
+        if not rendered:
+            from src import flaresolverr
+
+            rendered = flaresolverr.get_with_bypass(url, session=None, timeout=45)
         if rendered:
             for name, value in rendered.cookies.items():
                 session.cookies.set(name, value, domain=".apkmirror.com")
+            ua = getattr(rendered, "user_agent", None)
+            if ua:
+                session.headers["User-Agent"] = ua
             logging.info("APKMirror page obtained through the CI browser service")
             return rendered
         return None
@@ -552,6 +559,10 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             
         c_type = (config.get('type') or '').lower()
         if c_type and c_type not in r:
+            return False
+
+        c_vc = config.get('version_code')
+        if c_vc and str(c_vc) not in row_text:
             return False
         
         t_arch = (target_arch or 'universal').lower()
