@@ -97,10 +97,6 @@
       "source": "hushmessenger"
     },
     {
-      "app_name": "photomath",
-      "source": "devanced"
-    },
-    {
       "app_name": "pixiv",
       "source": "fripe070"
     },
@@ -171,10 +167,6 @@
     {
       "app_name": "crunchyroll",
       "source": "Hoo"
-    },
-    {
-      "app_name": "icon-pack-studio",
-      "source": "devanced"
     },
     {
       "app_name": "my-expenses",
@@ -359,10 +351,6 @@
     {
       "app_name": "google-maps",
       "source": "bearinmindcat"
-    },
-    {
-      "app_name": "facebook",
-      "source": "devanced"
     }
   ]
 }
