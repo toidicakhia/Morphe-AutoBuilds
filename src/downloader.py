@@ -176,6 +176,13 @@ def download_platform(
 
         if not config or not config.get("package"):
             raise FileNotFoundError(f"Config file not found for {app_name} on {platform}")
+
+        # Some apps can only be sourced correctly from specific mirrors (e.g.
+        # the patch set requires a variant APKMirror does not carry). Allow a
+        # platform config to opt out so the next download method is tried.
+        if config.get("disabled"):
+            logging.info(f"Download source '{platform}' is disabled for {app_name}; skipping")
+            return None, None, []
         
         # Override arch only if explicitly specified non-universal, or if config has no arch set
         if arch and arch != "universal":
