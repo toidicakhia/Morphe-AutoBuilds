@@ -15,7 +15,7 @@ on:
         description: 'Source name (from sources/ folder)'
         required: true
         type: string
-        default: 'revanced'
+        default: 'morphe'
       version:
         description: 'Specific version (leave empty for latest)'
         required: false

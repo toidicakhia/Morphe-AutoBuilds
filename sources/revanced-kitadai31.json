@@ -3,13 +3,13 @@
         "name": "revanced-android-6-7"
     },
     {
-        "user": "MorpheApp",
-        "repo": "morphe-cli",
-        "tag": "latest"
+      "user": "inotia00",
+      "repo": "revanced-cli",
+      "tag": "latest"
     },
     {
-        "user": "Peanut-Butter-bread",
-        "repo": "idk",
-        "tag": "latest"
+      "user": "kitadai31",
+      "repo": "revanced-patches-android6-7",
+      "tag": "latest"
     }
 ]
