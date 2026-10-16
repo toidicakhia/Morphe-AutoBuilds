@@ -127,6 +127,30 @@
     {
       "app_name": "x-new",
       "source": "piko-newx"
+    },
+    {
+      "app_name": "adguard",
+      "source": "rushiranpise-dev"
+    },
+    {
+      "app_name": "proton-mail",
+      "source": "hxreborn"
+    },
+    {
+      "app_name": "proton-pass",
+      "source": "hxreborn"
+    },
+    {
+      "app_name": "proton-vpn",
+      "source": "hxreborn"
+    },
+    {
+      "app_name": "netmonster",
+      "source": "rushiranpise-dev"
+    },
+    {
+      "app_name": "speedtest",
+      "source": "rushiranpise-dev"
     }
   ]
 }

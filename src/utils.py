@@ -562,7 +562,12 @@ def detect_source_type(cli_file: Path, patches_file: Path) -> str:
 
 
 def strip_zip_entries(zip_path: Path, patterns: list[str]) -> None:
-    """Strip matching file patterns from a ZIP archive in a cross-platform way."""
+    """Strip matching file patterns from a ZIP archive in a cross-platform way.
+
+    Prefers the ``zip`` tool (fast, in-place). Falls back to a pure-Python
+    rewrite. Callers only strip the patched, not-yet-signed output, so losing
+    any pre-existing signature here is expected.
+    """
     if not zip_path or not zip_path.exists():
         return
 
@@ -573,13 +578,12 @@ def strip_zip_entries(zip_path: Path, patterns: list[str]) -> None:
         except Exception:
             pass
 
-    # Pure Python fallback using zipfile
     temp_zip = zip_path.with_suffix(".tmp.zip")
     try:
         import fnmatch
         modified = False
-        with zipfile.ZipFile(zip_path, 'r') as zin:
-            with zipfile.ZipFile(temp_zip, 'w', compression=zin.compression) as zout:
+        with zipfile.ZipFile(zip_path, "r") as zin:
+            with zipfile.ZipFile(temp_zip, "w", compression=zin.compression) as zout:
                 for item in zin.infolist():
                     if any(fnmatch.fnmatch(item.filename, p) for p in patterns):
                         modified = True

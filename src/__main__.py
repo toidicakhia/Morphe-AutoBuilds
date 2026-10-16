@@ -291,20 +291,15 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
             logging.info(f"Normalized APK file: {input_apk}")
 
-        # --- ARCHITECTURE-SPECIFIC PROCESSING ---
-        if arch != "universal":
-            logging.info(f"Processing APK for {arch} architecture...")
-            if arch == "arm64-v8a":
-                utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/armeabi-v7a/*"])
-            elif arch == "armeabi-v7a":
-                utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/arm64-v8a/*"])
-        else:
-            utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*"])
-
         # Validate APK integrity (safety net: downloads were already validated,
-        # but bundle merging / arch stripping can corrupt the file).
+        # but bundle merging can corrupt the file).
         # Note: Only check integrity here, NOT signature. Merged bundles are
         # unsigned (APKEditor doesn't sign); the APK gets signed after patching.
+        #
+        # ABI libraries are stripped AFTER patching (see below), never before:
+        # removing entries invalidates the APK signature, and some patches
+        # (e.g. signature spoofing) require the stock-signed input to read the
+        # original certificate.
         logging.info("Checking APK integrity...")
         if not utils.check_apk_integrity(input_apk):
             logging.error(f"APK for {app_name} v{version} is corrupt and could not be repaired; trying next version")
@@ -367,6 +362,20 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
         # Patch succeeded -> cleanup input and sign.
         input_apk.unlink(missing_ok=True)
+
+        # --- ARCHITECTURE-SPECIFIC PROCESSING (post-patch) ---
+        # Strip ABI libraries from the patched, still-unsigned output. Doing
+        # this after patching keeps the stock signature of the input APK intact
+        # (required by signature-spoofing patches); the output is re-signed
+        # below anyway.
+        if arch != "universal":
+            logging.info(f"Processing APK for {arch} architecture...")
+            if arch == "arm64-v8a":
+                utils.strip_zip_entries(output_apk, ["lib/x86/*", "lib/x86_64/*", "lib/armeabi-v7a/*"])
+            elif arch == "armeabi-v7a":
+                utils.strip_zip_entries(output_apk, ["lib/x86/*", "lib/x86_64/*", "lib/arm64-v8a/*"])
+        else:
+            utils.strip_zip_entries(output_apk, ["lib/x86/*", "lib/x86_64/*"])
 
         signed_apk = Path(f"{app_name}-{arch}-{name}-v{version}.apk")
 
