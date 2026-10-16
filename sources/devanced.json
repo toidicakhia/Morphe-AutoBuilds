@@ -1,6 +1,6 @@
 [
     {
-        "name": "morphe-patches"
+        "name": "De-Vanced"
     },
     {
         "user": "MorpheApp",
@@ -8,8 +8,8 @@
         "tag": "latest"
     },
     {
-        "user": "durgesh0505",
-        "repo": "chiggi_morphe_patches",
+        "user": "RookieEnough",
+        "repo": "De-Vanced",
         "tag": "latest"
     }
 ]

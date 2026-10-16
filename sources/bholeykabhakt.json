@@ -1,0 +1,15 @@
+[
+    {
+        "name": "android-patches-xtra"
+    },
+    {
+        "user": "MorpheApp",
+        "repo": "morphe-cli",
+        "tag": "latest"
+    },
+    {
+        "user": "bholeykabhakt",
+        "repo": "android-patches-xtra",
+        "tag": "latest"
+    }
+]

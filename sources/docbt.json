@@ -1,0 +1,15 @@
+[
+    {
+        "name": "patched-up"
+    },
+    {
+        "user": "MorpheApp",
+        "repo": "morphe-cli",
+        "tag": "latest"
+    },
+    {
+        "user": "docbt",
+        "repo": "patched-up",
+        "tag": "latest"
+    }
+]
