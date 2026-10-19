@@ -1,8 +1,8 @@
 {
   "org": "pinterest",
   "name": "pinterest-pinterest",
-  "type": "APK",
-  "arch": "universal",
+  "type": "BUNDLE",
+  "arch": "arm64-v8a",
   "dpi": "120-640dpi",
   "package": "com.pinterest",
   "version": ""
