@@ -29,28 +29,8 @@
       "source": "v4n1x"
     },
     {
-      "app_name": "lightroom",
-      "source": "kveld9-extra"
-    },
-    {
       "app_name": "xrecorder",
       "source": "Hoo"
-    },
-    {
-      "app_name": "google-photos",
-      "source": "akash-photos"
-    },
-    {
-      "app_name": "disney-plus",
-      "source": "aimal"
-    },
-    {
-      "app_name": "duolingo",
-      "source": "Hoo"
-    },
-    {
-      "app_name": "google-news",
-      "source": "docbt"
     },
     {
       "app_name": "facebook",
@@ -65,40 +45,12 @@
       "source": "fripe070"
     },
     {
-      "app_name": "prime-video",
-      "source": "Hoo"
-    },
-    {
       "app_name": "proton-vpn",
       "source": "hxreborn"
     },
     {
-      "app_name": "meme",
-      "source": "Hoo"
-    },
-    {
-      "app_name": "wallcraft",
-      "source": "Hoo"
-    },
-    {
-      "app_name": "pandora",
-      "source": "Hoo"
-    },
-    {
-      "app_name": "icon-packer",
-      "source": "Hoo"
-    },
-    {
-      "app_name": "tumblr",
-      "source": "hoomans"
-    },
-    {
       "app_name": "threads",
       "source": "hushthreads"
-    },
-    {
-      "app_name": "crunchyroll",
-      "source": "aimal"
     },
     {
       "app_name": "telegram",
@@ -107,18 +59,6 @@
     {
       "app_name": "documentscanner",
       "source": "paresh"
-    },
-    {
-      "app_name": "vn",
-      "source": "riky-dev"
-    },
-    {
-      "app_name": "kakaotalk",
-      "source": "ample-dev"
-    },
-    {
-      "app_name": "podcast",
-      "source": "Hoo"
     },
     {
       "app_name": "windscribe",
@@ -150,6 +90,22 @@
     },
     {
       "app_name": "speedtest",
+      "source": "rushiranpise-dev"
+    },
+    {
+      "app_name": "capcut",
+      "source": "kveld9-extra"
+    },
+    {
+      "app_name": "truecaller",
+      "source": "paresh"
+    },
+    {
+      "app_name": "brave-browser",
+      "source": "dh6k"
+    },
+    {
+      "app_name": "es-file-explorer",
       "source": "rushiranpise-dev"
     }
   ]

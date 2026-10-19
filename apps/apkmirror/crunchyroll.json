@@ -1,8 +1,0 @@
-{
-  "org": "crunchyroll-llc-2",
-  "name": "crunchyroll",
-  "type": "BUNDLE",
-  "arch": "universal",
-  "dpi": "120-640dpi",
-  "package": "com.crunchyroll.crunchyroid"
-}
