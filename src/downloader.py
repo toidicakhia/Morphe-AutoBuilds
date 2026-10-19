@@ -22,6 +22,15 @@ class UnknownPatchCompatibilityError(ValueError):
     build with silently skipped patches, so the build must fail loudly instead
     of falling back to latest."""
 
+# Maps an Android architecture name to the ABI key the Morphe CLI uses in its
+# "versionCodes: ..." compatibility report.
+_ABI_BY_ARCH = {
+    "arm64-v8a": "ARM64_V8A",
+    "armeabi-v7a": "ARMEABI_V7A",
+    "x86": "X86",
+    "x86_64": "X86_64",
+}
+
 def download_resource(url: str, name: str = None) -> Path:
     res = session.get(url, stream=True)
     res.raise_for_status()
@@ -204,12 +213,13 @@ def download_platform(
         # instead. Latest is only used when the patches are version-agnostic
         # (CLI query succeeded but declared no specific versions).
         pinned = (config.get("version") or "").strip()
+        version_codes: dict[str, dict[str, str]] = {}
         if override_version:
             candidates = [override_version]
         elif pinned:
             candidates = [pinned]
         else:
-            compat = utils.get_supported_versions(config["package"], cli, patches)
+            compat = utils.get_supported_versions_with_codes(config["package"], cli, patches)
             if compat is None:
                 raise UnknownPatchCompatibilityError(
                     f"Cannot determine patch-compatible versions for {app_name} "
@@ -217,7 +227,8 @@ def download_platform(
                     f"latest to avoid shipping a build with silently skipped patches."
                 )
             elif compat:
-                candidates = compat
+                candidates = [version for version, _ in compat]
+                version_codes = {version: codes for version, codes in compat}
             else:
                 try:
                     latest = platform_module.get_latest_version(app_name, config)
@@ -226,11 +237,32 @@ def download_platform(
                     latest = None
                 candidates = [latest] if latest else []
 
+        # The pinned/override paths skip the CLI query above; still fetch the
+        # declared version codes (best effort) so variant selection can use
+        # them, e.g. on the older-version retry path.
+        if (override_version or pinned) and not version_codes:
+            declared = utils.get_supported_versions_with_codes(config["package"], cli, patches)
+            if declared:
+                version_codes = {version: codes for version, codes in declared}
+
         last_error: Exception | None = None
         for version in candidates:
             if not version:
                 continue
-            download_link = platform_module.get_download_link(version, app_name, config)
+            # The patch set may pin the exact flavor (version code) it supports
+            # for this version + ABI (e.g. Facebook ships Android 9 and
+            # Android 11+ bundles under one version name). Prefer the code the
+            # patches declare over any static config pin.
+            candidate_config = dict(config)
+            codes = version_codes.get(version) or {}
+            abi = _ABI_BY_ARCH.get((candidate_config.get("arch") or "").lower())
+            if abi and codes.get(abi):
+                candidate_config["version_code"] = codes[abi]
+                logging.info(
+                    f"Patch-declared version code for {app_name} v{version} "
+                    f"({abi}): {codes[abi]}"
+                )
+            download_link = platform_module.get_download_link(version, app_name, candidate_config)
             if not download_link:
                 last_error = ValueError(f"No download link found for {app_name} version {version}")
                 continue

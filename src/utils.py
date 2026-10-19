@@ -197,6 +197,30 @@ def get_highest_version(versions: list[str]) -> str | None:
             highest_version = v
     return highest_version
 
+_VERSION_CODES_RE = re.compile(r'\[versionCodes:\s*([^\]]*)\]', re.IGNORECASE)
+
+def _parse_version_codes(line: str) -> dict[str, str]:
+    """Extract the per-ABI version codes Morphe's list-versions prints.
+
+    Example line:
+        "583.0.0.39.55 [versionCodes: ARM64_V8A=475614366, ARMEABI_V7A=475614365] (90 patches)"
+    returns {"ARM64_V8A": "475614366", "ARMEABI_V7A": "475614365"}.
+
+    Patch sets use these codes to pin which flavor of a version they support
+    (e.g. Facebook ships both Android 9 and Android 11+ bundles under the same
+    version name, each with a different version code per ABI).
+    """
+    match = _VERSION_CODES_RE.search(line)
+    if not match:
+        return {}
+    codes = {}
+    for pair in match.group(1).split(','):
+        name, _, value = pair.partition('=')
+        name, value = name.strip(), value.strip()
+        if name and value.isdigit():
+            codes[name.upper()] = value
+    return codes
+
 def get_supported_versions(package_name: str, cli: str, patches: str) -> Optional[list[str]]:
     """Return the app versions the patch bundle declares compatibility with.
 
@@ -208,6 +232,22 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> Optiona
         None: the CLI query itself failed, so patch compatibility is unknown.
             The caller must NOT build; guessing latest risks shipping a build
             with silently skipped patches.
+    """
+    declared = get_supported_versions_with_codes(package_name, cli, patches)
+    if declared is None:
+        return None
+    return [version for version, _ in declared]
+
+def get_supported_versions_with_codes(package_name: str, cli: str, patches: str) -> Optional[list[tuple[str, dict[str, str]]]]:
+    """Like get_supported_versions, but keeps the per-ABI version codes.
+
+    Returns:
+        list[tuple[str, dict[str, str]]]: (version, {"ARM64_V8A": "475614366"})
+            pairs, highest version first. The codes map may be empty for patch
+            sets that do not pin specific builds.
+        []: the CLI query succeeded but no specific versions were declared
+            (patches are version-agnostic); building latest is safe.
+        None: the CLI query itself failed, so patch compatibility is unknown.
     """
     # Morphe CLI and ReVanced CLI have different list-versions syntax
     cli_name = Path(cli).name.lower()
@@ -265,6 +305,7 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> Optiona
         return []
 
     versions = []
+    version_codes: dict[str, dict[str, str]] = {}
     for line in lines[2:]:
         line = line.strip()
         if line and 'Any' not in line:
@@ -279,6 +320,9 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> Optiona
                 # Check if next parts are "build XXX"
                 if len(parts) >= 3 and parts[1].lower() == 'build':
                     version = f"{parts[0]} build {parts[2]}"
+                codes = _parse_version_codes(line)
+                if codes:
+                    version_codes.setdefault(version, {}).update(codes)
                 versions.append(version)
 
     # If Morphe CLI only returned a tiny "most common" list (or nothing),
@@ -310,9 +354,9 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> Optiona
         return []
 
     # Sort highest -> lowest.
-    versions = sorted(set(versions), key=normalize_version, reverse=True)
-    logging.info(f"CLI parsed versions: {versions}")
-    return versions
+    ordered = sorted(set(versions), key=normalize_version, reverse=True)
+    logging.info(f"CLI parsed versions: {ordered}")
+    return [(version, version_codes.get(version, {})) for version in ordered]
 
 
 def get_supported_version(package_name: str, cli: str, patches: str) -> Optional[str]:
