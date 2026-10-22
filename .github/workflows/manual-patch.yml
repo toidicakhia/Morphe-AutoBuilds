@@ -161,31 +161,23 @@ jobs:
           name: manual-apk-${{ inputs.app_name }}-${{ inputs.architecture }}
           path: "*.apk"
       
-      - name: Install Publisher Dependencies
-        if: ${{ inputs.replace_in_release == true }}
-        run: pip install requests
-
-      - name: Publish to GitLab Releases
+      - name: Publish to GitHub Release
         if: ${{ inputs.replace_in_release == true }}
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_PROJECT_ID: "87288318"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -z "$GITLAB_TOKEN" ]; then
-            echo "GITLAB_TOKEN secret is not set on this repo."
-            exit 1
-          fi
           mkdir -p ./release-apks
           cp -f *.apk ./release-apks/ 2>/dev/null || true
-          python scripts/gitlab_publish_release.py \
+          python scripts/github_publish_release.py \
             --apks-dir ./release-apks \
-            --merge
+            --tag latest
 
       - name: Publish Summary
         if: ${{ inputs.replace_in_release == true }}
         run: |
           count=$(ls -1 *.apk 2>/dev/null | wc -l)
-          echo "Published $count APK(s) to the release."
+          echo "Published $count APK(s) to the GitHub 'latest' release."
 
       - name: Cleanup Version Override
         if: ${{ inputs.version != '' && always() }}

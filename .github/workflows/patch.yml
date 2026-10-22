@@ -90,11 +90,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCE_FULL_REBUILD: ${{ inputs.force_full_rebuild || 'false' }}
-          # Release state now lives on GitLab: the planner reads manifest.json
-          # and the APK list from the GitLab release instead of GitHub's.
-          MORPHE_PLATFORM: gitlab
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_PROJECT_ID: "87288318" # Could use ${{ secrets.GITHUB_PROJECTID }} instead
         run: |
           python scripts/check_app_updates.py
 
@@ -251,14 +246,14 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-${{ matrix.app_name }}-${{ matrix.source }}
+          name: apk-${{ matrix.app_name }}-${{ matrix.source }}-${{ matrix.arch }}
           path: "*.apk"
 
       - name: Upload Build Records
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-records-${{ matrix.app_name }}-${{ matrix.source }}
+          name: build-records-${{ matrix.app_name }}-${{ matrix.source }}-${{ matrix.arch }}
           path: build_records/
           if-no-files-found: ignore
 
@@ -352,44 +347,21 @@ jobs:
         run: |
           python scripts/validate_github_auth.py
 
-      - name: Install Publisher Dependencies
+      - name: Publish to GitHub Releases
         if: steps.check-apks.outputs.skip_release == 'false'
-        run: pip install requests
-
-      - name: Check GitLab token
-        id: gitlab-token
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "$GITLAB_TOKEN" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish to GitLab Releases
-        if: steps.check-apks.outputs.skip_release == 'false' && steps.gitlab-token.outputs.available == 'true'
-        env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_PROJECT_ID: "87288318" # Could use ${{ secrets.GITHUB_PROJECTID }} instead
-        run: |
-          if [ -z "$GITLAB_TOKEN" ]; then
-            echo "GITLAB_TOKEN secret is not set on this repo."
-            exit 1
-          fi
-          # gitlab_publish_release.py --merge: uploads new APKs + manifest to the
-          # GitLab generic package registry, add/replaces their release asset
-          # links, deletes superseded older-version APKs, refreshes notes.
-          # Upload-first-then-cleanup order is preserved inside the script.
-          python scripts/gitlab_publish_release.py \
+          python scripts/github_publish_release.py \
             --apks-dir ./release-apks \
-            --merge
+            --tag latest
 
       - name: Publish Summary
         if: steps.check-apks.outputs.skip_release == 'false'
         run: |
           count=$(ls -1 ./release-apks/*.apk 2>/dev/null | wc -l)
-          echo "Published $count APK(s) plus manifest to the release."
+          echo "Published $count APK(s) plus manifest to the GitHub 'latest' release."
 
   cleanup:
     name: Cleanup Workflow Runs
