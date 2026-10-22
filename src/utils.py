@@ -91,6 +91,21 @@ def find_file(files: list[Path], prefix: str = None, suffix: str = None, contain
     
     return None
 
+def get_signing_credentials() -> tuple[str, str, str, str]:
+    """Return (keystore_path, keystore_password, key_alias, key_password).
+
+    Defaults to the bundled public keystore so community builds keep working
+    unchanged. CI can restore a private keystore from repository secrets and
+    point the APK_KEYSTORE* environment variables at it so builds are signed
+    with the same key Morphe Manager uses on-device.
+    """
+    keystore = os.environ.get("APK_KEYSTORE") or "keystore/public.jks"
+    keystore_password = os.environ.get("APK_KEYSTORE_PASS") or "public"
+    key_alias = os.environ.get("APK_KEY_ALIAS") or "public"
+    key_password = os.environ.get("APK_KEY_PASS") or keystore_password
+    return keystore, keystore_password, key_alias, key_password
+
+
 def find_apksigner() -> str | None:
     on_path = shutil.which("apksigner")
     if on_path:

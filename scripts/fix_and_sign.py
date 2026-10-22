@@ -3,6 +3,19 @@ import subprocess
 import sys
 import os
 
+def signing_args():
+    """apksigner keystore arguments, overridable via APK_KEYSTORE* env vars."""
+    keystore = os.environ.get("APK_KEYSTORE") or "keystore/public.jks"
+    keystore_pass = os.environ.get("APK_KEYSTORE_PASS") or "public"
+    key_alias = os.environ.get("APK_KEY_ALIAS") or "public"
+    key_pass = os.environ.get("APK_KEY_PASS") or keystore_pass
+    return [
+        "--ks", keystore,
+        "--ks-pass", f"pass:{keystore_pass}",
+        "--key-pass", f"pass:{key_pass}",
+        "--ks-key-alias", key_alias,
+    ]
+
 def fix_apk(apk_path):
     """Try to fix APK using apktool"""
     try:
@@ -36,10 +49,7 @@ def main():
     if fixed:
         subprocess.run([
             "apksigner", "sign",
-            "--ks", "keystore/public.jks",
-            "--ks-pass", "pass:public",
-            "--key-pass", "pass:public",
-            "--ks-key-alias", "public",
+            *signing_args(),
             "--in", fixed,
             "--out", output_apk
         ], check=True)
@@ -49,10 +59,7 @@ def main():
         try:
             subprocess.run([
                 "apksigner", "sign",
-                "--ks", "keystore/public.jks",
-                "--ks-pass", "pass:public",
-                "--key-pass", "pass:public",
-                "--ks-key-alias", "public",
+                *signing_args(),
                 "--in", input_apk,
                 "--out", output_apk
             ], check=True)

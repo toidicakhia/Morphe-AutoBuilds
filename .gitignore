@@ -1,2 +1,4 @@
 __pycache__/
 NUL
+# Keystore restored from repository secrets during CI builds
+keystore/*.p12
