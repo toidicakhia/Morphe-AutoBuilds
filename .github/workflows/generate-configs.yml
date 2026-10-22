@@ -30,7 +30,7 @@ jobs:
           echo '{"org":"pixiv","name":"pixiv","type":"APK","arch":"universal","dpi":"nodpi","package":"jp.pxv.android","version":""}' > apps/apkmirror/pixiv.json
           echo '{"org":"amazon-com","name":"amazon-prime-video","type":"APK","arch":"universal","dpi":"nodpi","package":"com.amazon.avod.thirdpartyclient","version":""}' > apps/apkmirror/prime-video.json
           echo '{"org":"proton-technologies","name":"proton-mail","type":"APK","arch":"universal","dpi":"nodpi","package":"ch.protonmail.android","version":""}' > apps/apkmirror/proton-mail.json
-          echo '{"org":"proton-technologies","name":"protonvpn","type":"APK","arch":"universal","dpi":"nodpi","package":"ch.protonvpn.android","version":""}' > apps/apkmirror/proton-vpn.json
+          echo '{"org":"proton-technologies-ag","name":"protonvpn-secure-and-free-vpn","release_prefix":"proton-vpn-fast-secure-vpn","type":"APK","arch":"universal","dpi":"nodpi","package":"ch.protonvpn.android","version":""}' > apps/apkmirror/proton-vpn.json
           echo '{"org":"rarlab","name":"rar","type":"APK","arch":"universal","dpi":"nodpi","package":"com.rarlab.rar","version":""}' > apps/apkmirror/rar.json
           echo '{"org":"spotify-ltd","name":"spotify","type":"APK","arch":"universal","dpi":"nodpi","package":"com.spotify.music","version":""}' > apps/apkmirror/spotify.json
           echo '{"org":"strava","name":"strava","type":"APK","arch":"universal","dpi":"nodpi","package":"com.strava","version":""}' > apps/apkmirror/strava.json
