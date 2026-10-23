@@ -5,11 +5,11 @@
     {
       "user": "MorpheApp",
       "repo": "morphe-cli",
-      "tag": "v1.18.1"
+      "tag": "v1.19.0"
    },
     {
       "user": "MorpheApp",
       "repo": "morphe-patches",
-      "tag": "v1.47.0"
+      "tag": "v1.48.0"
     }
 ]
