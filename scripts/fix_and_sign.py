@@ -4,16 +4,12 @@ import sys
 import os
 
 def signing_args():
-    """apksigner keystore arguments, overridable via APK_KEYSTORE* env vars."""
-    keystore = os.environ.get("APK_KEYSTORE") or "keystore/public.jks"
-    keystore_pass = os.environ.get("APK_KEYSTORE_PASS") or "public"
-    key_alias = os.environ.get("APK_KEY_ALIAS") or "public"
-    key_pass = os.environ.get("APK_KEY_PASS") or keystore_pass
+    """apksigner keystore arguments for the bundled public keystore."""
     return [
-        "--ks", keystore,
-        "--ks-pass", f"pass:{keystore_pass}",
-        "--key-pass", f"pass:{key_pass}",
-        "--ks-key-alias", key_alias,
+        "--ks", "keystore/public.jks",
+        "--ks-pass", "pass:public",
+        "--key-pass", "pass:public",
+        "--ks-key-alias", "public",
     ]
 
 def fix_apk(apk_path):

@@ -392,18 +392,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             utils.run_process([zipalign, "-f", "-P", "16", "4", str(output_apk), str(aligned_apk)])
             aligned_apk.replace(output_apk)
 
-        keystore, keystore_pass, key_alias, key_pass = utils.get_signing_credentials()
-        signing_args = [
-            "--ks", str(keystore),
-            "--ks-pass", f"pass:{keystore_pass}",
-            "--key-pass", f"pass:{key_pass}",
-            "--ks-key-alias", key_alias,
-        ]
-
         try:
             utils.run_process([
                 str(apksigner), "sign", "--verbose",
-                *signing_args,
+                "--ks", "keystore/public.jks",
+                "--ks-pass", "pass:public",
+                "--key-pass", "pass:public",
+                "--ks-key-alias", "public",
                 "--in", str(output_apk), "--out", str(signed_apk)
             ], capture=True, stream=True)
         except Exception as e:
@@ -413,7 +408,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             utils.run_process([
                 str(apksigner), "sign", "--verbose",
                 "--min-sdk-version", "21",
-                *signing_args,
+                "--ks", "keystore/public.jks",
+                "--ks-pass", "pass:public",
+                "--key-pass", "pass:public",
+                "--ks-key-alias", "public",
                 "--in", str(output_apk), "--out", str(signed_apk)
             ], capture=True, stream=True)
 

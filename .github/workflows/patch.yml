@@ -189,31 +189,6 @@ jobs:
             sleep 5
           done
 
-      - name: Restore Signing Keystore
-        env:
-          MORPHE_KEYSTORE_B64: ${{ secrets.MORPHE_KEYSTORE_B64 }}
-          MORPHE_KEYSTORE_PASS: ${{ secrets.MORPHE_KEYSTORE_PASS }}
-          MORPHE_KEY_ALIAS: ${{ secrets.MORPHE_KEY_ALIAS }}
-          MORPHE_KEY_PASS: ${{ secrets.MORPHE_KEY_PASS }}
-        run: |
-          if [ -z "$MORPHE_KEYSTORE_B64" ]; then
-            echo "MORPHE_KEYSTORE_B64 not set; using the bundled public keystore."
-            exit 0
-          fi
-          if [ -z "$MORPHE_KEYSTORE_PASS" ]; then
-            echo "MORPHE_KEYSTORE_PASS is required when MORPHE_KEYSTORE_B64 is set." >&2
-            exit 1
-          fi
-          mkdir -p keystore
-          printf '%s' "$MORPHE_KEYSTORE_B64" | base64 -d > keystore/morphe.p12
-          {
-            echo "APK_KEYSTORE=keystore/morphe.p12"
-            echo "APK_KEYSTORE_PASS=$MORPHE_KEYSTORE_PASS"
-            echo "APK_KEY_ALIAS=${MORPHE_KEY_ALIAS:-Morphe}"
-            echo "APK_KEY_PASS=${MORPHE_KEY_PASS:-$MORPHE_KEYSTORE_PASS}"
-          } >> "$GITHUB_ENV"
-          echo "Signing with the keystore from repository secrets."
-
       - name: Build APK
         env:
           APP_NAME: ${{ matrix.app_name }}
