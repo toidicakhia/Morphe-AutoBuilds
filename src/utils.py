@@ -414,6 +414,20 @@ def fetch_json(url: str, headers: dict | None = None) -> dict | list:
     return response.json()
 
 
+def source_entry_matches_arch(entry: dict, arch: str | None) -> bool:
+    """Return True when a source entry applies to the requested architecture.
+
+    Entries without an ``arches`` list apply to every architecture, preserving
+    the existing single-source behaviour. When ``arches`` is present it lets a
+    source override the patch release for a specific ABI without splitting the
+    app into separate source entries.
+    """
+    supported = entry.get("arches")
+    if not supported or not arch:
+        return True
+    return arch.lower() in {str(a).lower() for a in supported}
+
+
 def normalize_source_entry(entry: dict) -> dict:
     provider = (entry.get("provider") or "github").lower().strip()
     tag = (entry.get("tag") or "latest").strip() or "latest"

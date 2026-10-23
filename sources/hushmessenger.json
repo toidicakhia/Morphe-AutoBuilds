@@ -10,6 +10,13 @@
     {
         "user": "SysAdminDoc",
         "repo": "HushMessenger",
-        "tag": "latest"
+        "tag": "latest",
+        "arches": ["arm64-v8a"]
+    },
+    {
+        "user": "toidicakhia",
+        "repo": "HushMessenger",
+        "tag": "v0.25.1",
+        "arches": ["armeabi-v7a"]
     }
 ]

@@ -447,14 +447,15 @@ def _fetch_bundle_signature(bundle_url: str) -> str:
     return f"bundle:{body}" if body else f"bundle:{bundle_url}@empty"
 
 
-_source_sig_cache: Dict[str, str] = {}
+_source_sig_cache: Dict[Tuple[str, str], str] = {}
 
 
-def get_source_signature(source: str) -> str:
+def get_source_signature(source: str, arch: str = None) -> str:
     """Combine release signatures of every repo declared in sources/<source>.json
-    into a single deterministic string."""
-    if source in _source_sig_cache:
-        return _source_sig_cache[source]
+    into a single deterministic string for the requested architecture."""
+    cache_key = (source, (arch or "").lower())
+    if cache_key in _source_sig_cache:
+        return _source_sig_cache[cache_key]
 
     src_file = SOURCES_DIR / f"{source}.json"
     if not src_file.exists():
@@ -465,7 +466,7 @@ def get_source_signature(source: str) -> str:
                 break
     if not src_file.exists():
         sig = f"missing-source:{source}"
-        _source_sig_cache[source] = sig
+        _source_sig_cache[cache_key] = sig
         return sig
 
     try:
@@ -473,18 +474,20 @@ def get_source_signature(source: str) -> str:
             data = json.load(f)
     except Exception as e:
         sig = f"unparseable:{e}"
-        _source_sig_cache[source] = sig
+        _source_sig_cache[cache_key] = sig
         return sig
 
     if isinstance(data, dict) and "bundle_url" in data:
         sig = _fetch_bundle_signature(data["bundle_url"])
-        _source_sig_cache[source] = sig
+        _source_sig_cache[cache_key] = sig
         return sig
 
     parts: List[str] = []
     if isinstance(data, list):
         for entry in data:
             if not isinstance(entry, dict):
+                continue
+            if not provider_utils.source_entry_matches_arch(entry, arch):
                 continue
             provider = (entry.get("provider") or "github").lower().strip()
             tag = entry.get("tag", "latest")
@@ -512,14 +515,14 @@ def get_source_signature(source: str) -> str:
             # else: metadata-only entry (no repo) -> intentionally skipped.
 
     sig = ";".join(parts) if parts else f"empty:{source}"
-    _source_sig_cache[source] = sig
+    _source_sig_cache[cache_key] = sig
     return sig
 
 
 # ---------------------------------------------------------------------------
 # Recommended version: what the builder will actually ship
 # ---------------------------------------------------------------------------
-_recommended_version_cache: Dict[Tuple[str, str], str] = {}
+_recommended_version_cache: Dict[Tuple[str, str, str], str] = {}
 
 
 def _download_release_asset_json(asset_url: str) -> Optional[dict]:
@@ -579,8 +582,8 @@ def _pick_recommended_target(patches_json: dict, package_name: str) -> str:
     return ""
 
 
-def fetch_recommended_version(app_name: str, source: str) -> str:
-    """Return the version the builder is expected to ship for (app, source),
+def fetch_recommended_version(app_name: str, source: str, arch: str = None) -> str:
+    """Return the version the builder is expected to ship for (app, source, arch),
     derived from the patch set's patches-list (highest isExperimental:false
     target for the app's package).
 
@@ -593,7 +596,7 @@ def fetch_recommended_version(app_name: str, source: str) -> str:
     non-github source, etc.). In that case the caller falls back to the legacy
     store-latest probe so we don't regress detection.
     """
-    ckey = (app_name, source)
+    ckey = (app_name, source, (arch or "").lower())
     if ckey in _recommended_version_cache:
         return _recommended_version_cache[ckey]
 
@@ -623,6 +626,8 @@ def fetch_recommended_version(app_name: str, source: str) -> str:
         if isinstance(src_data, list):
             for entry in src_data:
                 if not isinstance(entry, dict):
+                    continue
+                if not provider_utils.source_entry_matches_arch(entry, arch):
                     continue
                 if (entry.get("provider") or "github").lower() != "github":
                     continue
@@ -844,7 +849,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         mkey = make_manifest_key(app, src, arch)
 
         cur_app_ver = load_app_config_version(app)            # '' if 'latest'
-        cur_src_sig = get_source_signature(src)
+        cur_src_sig = get_source_signature(src, arch)
         old = old_entries.get(mkey)
         old_src_sig = (old or {}).get("source_sig", "")
         if old and old_src_sig and _is_unreliable_source_sig(cur_src_sig):
@@ -917,7 +922,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
             # support for a newer app version, the SOURCE SIGNATURE changes
             # (line 850-851 above), which already triggers the rebuild.
             if not cur_app_ver and old_built_ver:
-                target_ver = fetch_recommended_version(app, src)
+                target_ver = fetch_recommended_version(app, src, arch)
                 if target_ver and _is_newer_version(target_ver, old_built_ver):
                     reasons.append(
                         f"new-version: built {old_built_ver!r} -> patch {target_ver!r}"

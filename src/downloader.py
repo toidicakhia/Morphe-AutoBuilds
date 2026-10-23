@@ -55,7 +55,7 @@ def download_resource(url: str, name: str = None) -> Path:
 
     return filepath
 
-def download_required(source: str) -> tuple[list[Path], str]:
+def download_required(source: str, arch: str = None) -> tuple[list[Path], str]:
     source_path = Path("sources") / f"{source}.json"
     with source_path.open() as json_file:
         repos_info = json.load(json_file)
@@ -69,6 +69,8 @@ def download_required(source: str) -> tuple[list[Path], str]:
     downloaded_files = []
 
     for repo_info in repos_info[1:]:
+        if not utils.source_entry_matches_arch(repo_info, arch):
+            continue
         release = utils.detect_release(repo_info)
         entry_name = (
             repo_info.get("repo")

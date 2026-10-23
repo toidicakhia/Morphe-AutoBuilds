@@ -73,7 +73,7 @@ def _unpatched_build_reason(output: str | None, downloaded_version: str) -> str 
 
 def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     """Build APK for specific architecture"""
-    download_files, name = downloader.download_required(source)
+    download_files, name = downloader.download_required(source, arch)
 
     # Log downloaded files for debugging
     logging.info(f"📦 Downloaded {len(download_files)} files for {source}:")
