@@ -658,6 +658,71 @@ def strip_zip_entries(zip_path: Path, patterns: list[str]) -> None:
             temp_zip.unlink(missing_ok=True)
 
 
+def store_native_libs(apk_path: Path) -> None:
+    """Rewrite every native library entry as STORED (uncompressed).
+
+    Some installers keep native libraries compressed at runtime even when the
+    manifest asks for extraction.  SoLoader can then only fall back to reading
+    the library straight from the APK, which requires an uncompressed entry.
+    Instagram's armv7 build failed with ``couldn't find DSO to load:
+    libsuperpack-jni.so`` for exactly that reason; storing the entries makes
+    both the extracted and the in-APK path usable.
+
+    The rewrite also drops stale ZIP extra fields (notably the old zipalign
+    0xD935 alignment record) and leaves every other entry's compression as it
+    was.  Call it before ``zipalign`` and before signing.
+    """
+    if not apk_path or not apk_path.exists():
+        return
+
+    temp_zip = apk_path.with_suffix(".stored.zip")
+    try:
+        with zipfile.ZipFile(apk_path, "r") as zin:
+            with zipfile.ZipFile(temp_zip, "w") as zout:
+                for item in zin.infolist():
+                    info = zipfile.ZipInfo(item.filename, item.date_time)
+                    is_library = item.filename.startswith("lib/") and item.filename.endswith(".so")
+                    info.compress_type = zipfile.ZIP_STORED if is_library else item.compress_type
+                    info.external_attr = item.external_attr
+                    info.internal_attr = item.internal_attr
+                    info.create_system = item.create_system
+                    info.comment = item.comment
+                    if not is_library:
+                        info.extra = item.extra
+                    zout.writestr(info, zin.read(item.filename))
+        temp_zip.replace(apk_path)
+        logging.info("Stored native libraries uncompressed")
+    finally:
+        temp_zip.unlink(missing_ok=True)
+
+
+def zipalign_apk(apk_path: Path, apksigner: str) -> None:
+    """Align an unsigned APK for 16 KB pages, replacing it with the aligned file.
+
+    The SDK's zipalign next to apksigner is preferred.  Older build-tools do not
+    know ``-P``, so fall back to ``-p`` (4 KB page alignment) there instead of
+    failing a build on a host whose system zipalign predates 16 KB pages.
+    """
+    candidates = [Path(apksigner).with_name("zipalign"), shutil.which("zipalign")]
+    zipalign = next((str(c) for c in candidates if c and Path(c).is_file()), None)
+    if not zipalign:
+        raise RuntimeError("No zipalign found beside apksigner or on PATH")
+    aligned_apk = apk_path.with_suffix(".aligned.apk")
+    try:
+        last_error = None
+        for page_args in (["-P", "16"], ["-p"]):
+            try:
+                run_process([zipalign, "-f", *page_args, "4", str(apk_path), str(aligned_apk)])
+                run_process([zipalign, "-c", *page_args, "4", str(aligned_apk)])
+                aligned_apk.replace(apk_path)
+                return
+            except Exception as e:
+                last_error = e
+        raise RuntimeError(f"zipalign failed: {last_error}")
+    finally:
+        aligned_apk.unlink(missing_ok=True)
+
+
 def check_apk_integrity(apk_path: Path) -> bool:
     """Validate that APK is a valid uncorrupted zip archive."""
     if not apk_path or not apk_path.exists() or apk_path.stat().st_size == 0:

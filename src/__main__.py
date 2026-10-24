@@ -392,6 +392,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             utils.run_process([zipalign, "-f", "-P", "16", "4", str(output_apk), str(aligned_apk)])
             aligned_apk.replace(output_apk)
 
+        # Instagram's installer can keep native libraries compressed at runtime.
+        # Store them (and keep the archive aligned) so SoLoader can load them
+        # directly from the APK instead of failing with "couldn't find DSO".
+        if app_name == "instagram":
+            utils.store_native_libs(output_apk)
+            utils.zipalign_apk(output_apk, apksigner)
+
         try:
             utils.run_process([
                 str(apksigner), "sign", "--verbose",
