@@ -5,6 +5,5 @@
   "arch": "universal",
   "dpi": "nodpi",
   "package": "org.telegram.messenger.web",
-  "version": "",
-  "disabled": true
+  "version": ""
 }

@@ -387,10 +387,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         if app_name in ("tiktok", "twitter", "x-new"):
             from src.play_updates import disable_play_store_updates
             disable_play_store_updates(output_apk)
-            zipalign = shutil.which("zipalign") or str(Path(apksigner).with_name("zipalign"))
-            aligned_apk = output_apk.with_suffix(".aligned.apk")
-            utils.run_process([zipalign, "-f", "-P", "16", "4", str(output_apk), str(aligned_apk)])
-            aligned_apk.replace(output_apk)
+            utils.zipalign_apk(output_apk, apksigner)
 
         # Instagram's installer can keep native libraries compressed at runtime.
         # Store them (and keep the archive aligned) so SoLoader can load them
