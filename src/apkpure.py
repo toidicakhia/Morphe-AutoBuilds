@@ -9,6 +9,7 @@ API: GET https://tapi.pureapk.com/v3/get_app_his_version
      returns: version_list[] with version_name and asset.urls[0] (direct link)
 """
 
+import json
 import logging
 import re
 
@@ -33,12 +34,33 @@ API_HEADERS = {
 }
 
 
-def _api_versions(package: str):
+def _api_headers(arch: str | None) -> dict:
+    """Return API headers advertising the requested ABI as the device's ABI.
+
+    APKPure serves a single APK per device profile, not per URL. The default
+    profile lists arm64-v8a first, so asking for an armeabi-v7a build without
+    changing the profile returns an arm64-only APK (and a 32-bit output with no
+    native libraries at all).
+    """
+    headers = dict(API_HEADERS)
+    arch = (arch or "").lower()
+    if arch in ("arm64-v8a", "armeabi-v7a"):
+        profile = json.loads(headers["Ual-Access-ProjectA"])
+        profile["device_info"]["abis"] = (
+            ["armeabi-v7a", "armeabi"]
+            if arch == "armeabi-v7a"
+            else ["arm64-v8a", "armeabi-v7a", "armeabi"]
+        )
+        headers["Ual-Access-ProjectA"] = json.dumps(profile, separators=(",", ":"))
+    return headers
+
+
+def _api_versions(package: str, arch: str | None = None):
     """Return the API's version list for a package, or None on failure."""
     try:
         res = session.get(
             API_URL,
-            headers=API_HEADERS,
+            headers=_api_headers(arch),
             params={"package_name": package, "hl": "en"},
             timeout=20,
         )
@@ -120,8 +142,9 @@ def get_latest_version(app_name: str, config: str) -> str:
 def get_download_link(version: str, app_name: str, config: str) -> str:
     package = config.get("package", "")
 
-    # API first: direct download URL, no Cloudflare.
-    versions = _api_versions(package)
+    # API first: direct download URL, no Cloudflare. Advertise the requested
+    # ABI so APKPure returns that ABI's APK instead of its default arm64 one.
+    versions = _api_versions(package, config.get("arch"))
     if versions:
         entry = _api_match(versions, version)
         if entry:

@@ -256,6 +256,17 @@ def download_platform(
             # Android 11+ bundles under one version name). Prefer the code the
             # patches declare over any static config pin.
             candidate_config = dict(config)
+            # Apps whose mirror variants are compiled per ABI (Messenger) list
+            # the supported build for each ABI in their config. Patch-declared
+            # codes below still take precedence when the bundle provides them.
+            arch_codes = config.get("version_code_by_arch") or {}
+            arch_code = arch_codes.get((candidate_config.get("arch") or "").lower())
+            if arch_code:
+                candidate_config["version_code"] = str(arch_code)
+                logging.info(
+                    f"Config-declared version code for {app_name} v{version} "
+                    f"({candidate_config['arch']}): {arch_code}"
+                )
             codes = version_codes.get(version) or {}
             abi = _ABI_BY_ARCH.get((candidate_config.get("arch") or "").lower())
             if abi and codes.get(abi):
