@@ -440,12 +440,34 @@ def main():
         with open(arch_config_path) as f:
             arch_config = json.load(f)
         
-        # Find arches for this app
-        arches = [(getenv("ARCH") or "universal").strip()]
+        # Find arches for this app. An explicit ARCH normally wins, but a
+        # "universal" request for an app whose configured builds are ABI-split
+        # (e.g. Facebook, whose bundles are not truly universal) would produce
+        # an APK that only contains the first ABI. Build the configured ABIs
+        # instead of signing a mislabelled APK.
+        requested_arch = (getenv("ARCH") or "").strip()
+        configured_arches = None
         for config in arch_config:
-            if not getenv("ARCH") and config["app_name"] == app_name and config["source"] == source:
-                arches = config["arches"]
+            if config["app_name"] == app_name and config["source"] == source:
+                configured_arches = config["arches"]
                 break
+
+        if (
+            requested_arch == "universal"
+            and configured_arches
+            and "universal" not in configured_arches
+        ):
+            logging.info(
+                f"{app_name}/{source} has no universal build; "
+                f"building configured ABIs: {', '.join(configured_arches)}"
+            )
+            arches = configured_arches
+        elif requested_arch:
+            arches = [requested_arch]
+        elif configured_arches:
+            arches = configured_arches
+        else:
+            arches = ["universal"]
         
         # Build for each architecture
         built_apks = []
