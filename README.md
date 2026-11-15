@@ -66,7 +66,6 @@ This repository utilizes a robust Python-based pipeline to ensure high reliabili
 Morphe-AutoBuilds/
 ├── .github/workflows/      # GitHub Actions automation
 │   ├── patch.yml           # Daily automated builds (06:00 UTC)
-│   └── manual-patch.yml    # Manual trigger workflow
 ├── apps/                   # APK source configurations
 │   ├── apkmirror/          # APKMirror definitions
 │   ├── apkpure/            # APKPure definitions
@@ -235,18 +234,6 @@ python -m src
 * **Function:** Iterates through all configured apps and architectures.
 * **Output:** Refreshed build outputs for the configured apps.
 
-### Manual Build (`manual-patch.yml`)
-
-* **Trigger:** Manually via the GitHub Actions "Run workflow" button.
-* **Capabilities:**
-* Target specific apps.
-* Target specific architectures.
-* Force specific APK versions.
-* Option to update the public release or just build artifacts.
-
-
-
----
 
 ## 🤝 Contributing
 
