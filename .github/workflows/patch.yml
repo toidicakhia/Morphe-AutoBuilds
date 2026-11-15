@@ -237,6 +237,7 @@ jobs:
           if [ -f manifest.json ]; then
             echo "✅ manifest.json built:"
             python3 -m json.tool manifest.json | head -40
+            cp manifest.json release-apks/manifest.json
           fi
 
           echo "🚀 Publishing to GitHub Releases..."
