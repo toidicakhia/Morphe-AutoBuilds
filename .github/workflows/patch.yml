@@ -204,7 +204,7 @@ jobs:
                 [ -f "$apk" ] || continue
                 found_apk=true
                 echo "Recording build for: $apk"
-                APK_PATH="$apk" python scripts/record_build.py || true
+                APK_PATH="$apk" APP_NAME="$APP_NAME" SOURCE="$SOURCE" ARCH="" python scripts/record_build.py || true
                 cp "$apk" release-apks/
               done
               if [ "$found_apk" = false ]; then
