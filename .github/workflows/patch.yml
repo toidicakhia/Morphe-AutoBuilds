@@ -69,8 +69,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: "zulu"
-          java-version: "17"
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Install Dependencies
         run: |
@@ -151,7 +151,7 @@ jobs:
           set -euo pipefail
           mkdir -p release-apks
           find . -maxdepth 1 -name "*.apk" -exec cp {} release-apks/ \;
-          count=$(ls -1 release-apks/*.apk 2>/dev/null | wc -l)
+          count=$(find release-apks -maxdepth 1 -name '*.apk' 2>/dev/null | wc -l)
           if [ "$count" -eq 0 ]; then
             echo "No APKs found to publish"
             exit 0
@@ -193,7 +193,7 @@ jobs:
           while IFS= read -r entry; do
             APP_NAME=$(echo "$entry" | jq -r '.app_name')
             SOURCE=$(echo "$entry" | jq -r '.source')
-            ARCH=$(echo "$entry" | jq -r '.arch')
+            ARCH=$(echo "$entry" | jq -r '.arch // ""')
             echo ""
             echo "=== Building $APP_NAME | $SOURCE | $ARCH ==="
             if APP_NAME="$APP_NAME" SOURCE="$SOURCE" ARCH="$ARCH" CI=true GITHUB_RUN_ID="$GITHUB_RUN_ID" \
@@ -221,7 +221,7 @@ jobs:
           echo ""
           echo "📁 APKs ready for release:"
           ls -la release-apks/ || true
-          built_count=$(ls -1 release-apks/*.apk 2>/dev/null | wc -l)
+          built_count=$(find release-apks -maxdepth 1 -name '*.apk' 2>/dev/null | wc -l)
           echo "📊 Rebuilt APKs: $built_count (failures: $FAILURES)"
 
           if [ "$built_count" -eq 0 ]; then
@@ -243,7 +243,7 @@ jobs:
           python scripts/validate_github_auth.py
           python scripts/github_publish_release.py --apks-dir release-apks
 
-          final_count=$(ls -1 release-apks/*.apk 2>/dev/null | wc -l)
+          final_count=$(find release-apks -maxdepth 1 -name '*.apk' 2>/dev/null | wc -l)
           echo "Published $final_count APK(s) plus manifest to the GitHub 'latest' release."
 
       - name: Cleanup Old Workflow Runs
