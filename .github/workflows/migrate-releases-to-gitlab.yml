@@ -67,7 +67,7 @@ jobs:
       - name: Migrate assets to GitLab and verify
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_PROJECT_ID: "87288318"
+          GITLAB_PROJECT_ID: "88812153"
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             python scripts/migrate_gitlab_assets.py --src-dir ./gh-assets --dry-run

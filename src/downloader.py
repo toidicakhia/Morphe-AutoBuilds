@@ -146,6 +146,35 @@ def download_from_bundle(bundle_info: dict) -> tuple[list[Path], str]:
     
     return downloaded_files, name
 
+def _download_links(links: list[str]) -> Path | None:
+    """Download one or more variant files for a single app version.
+
+    A single link downloads exactly as before. Multiple links are
+    per-device variants of the same version (same base APK, different
+    config splits): download each under a part name, combine them into one
+    bundle with the union of their entries, and return it under the first
+    file's name so downstream merge/patch steps see a single bundle.
+    """
+    if len(links) == 1:
+        return download_resource(links[0])
+
+    first = download_resource(links[0])
+    parts = [first]
+    for i, link in enumerate(links[1:], start=1):
+        part_name = f"{first.stem}__part{i}{first.suffix}"
+        parts.append(download_resource(link, name=part_name))
+
+    combined = first.with_name(f"{first.stem}__combined{first.suffix}")
+    result = utils.combine_bundles(parts, combined)
+    for p in parts:
+        p.unlink(missing_ok=True)
+    if result is None:
+        return None
+    result.replace(first)
+    logging.info(f"Combined {len(parts)} variants into {first.name}")
+    return first
+
+
 def download_platform(
     app_name: str,
     platform: str,
@@ -251,36 +280,28 @@ def download_platform(
         for version in candidates:
             if not version:
                 continue
-            # The patch set may pin the exact flavor (version code) it supports
-            # for this version + ABI (e.g. Facebook ships Android 9 and
-            # Android 11+ bundles under one version name). Prefer the code the
-            # patches declare over any static config pin.
-            candidate_config = dict(config)
-            # Apps whose mirror variants are compiled per ABI (Messenger) list
-            # the supported build for each ABI in their config. Patch-declared
-            # codes below still take precedence when the bundle provides them.
-            arch_codes = config.get("version_code_by_arch") or {}
-            arch_code = arch_codes.get((candidate_config.get("arch") or "").lower())
-            if arch_code:
-                candidate_config["version_code"] = str(arch_code)
-                logging.info(
-                    f"Config-declared version code for {app_name} v{version} "
-                    f"({candidate_config['arch']}): {arch_code}"
-                )
-            codes = version_codes.get(version) or {}
-            abi = _ABI_BY_ARCH.get((candidate_config.get("arch") or "").lower())
-            if abi and codes.get(abi):
-                candidate_config["version_code"] = codes[abi]
-                logging.info(
-                    f"Patch-declared version code for {app_name} v{version} "
-                    f"({abi}): {codes[abi]}"
-                )
-            download_link = platform_module.get_download_link(version, app_name, candidate_config)
-            if not download_link:
+            # Some platforms (APKPure) list several per-device variant
+            # downloads for one version; fetch all of them and combine, so
+            # the bundle carries every variant's splits (notably all ABIs).
+            links: list[str] = []
+            multi = getattr(platform_module, "get_download_links", None)
+            if callable(multi):
+                try:
+                    links = multi(version, app_name, config) or []
+                except Exception as e:
+                    logging.debug(f"get_download_links failed for {app_name}: {e}")
+                    links = []
+            if not links:
+                download_link = platform_module.get_download_link(version, app_name, config)
+                if download_link:
+                    links = [download_link]
+            if not links:
                 last_error = ValueError(f"No download link found for {app_name} version {version}")
                 continue
             try:
-                filepath = download_resource(download_link)
+                filepath = _download_links(links)
+                if filepath is None:
+                    raise ValueError(f"Failed to combine variant downloads for {app_name} version {version}")
                 return filepath, version, candidates
             except Exception as e:
                 last_error = e
