@@ -1,5 +1,17 @@
-# Updated: exclude "Hide layout components" - its SpoofSignature dependency fails
-# when the base APK has no readable signing certificate (unsigned mirror build).
+# The Linux CI runner's Morphe patcher cannot read this APK's signing block
+# (identical APK + CLI + bundle patch successfully on Windows), so every patch
+# depending on SpoofSignaturePatch aborts. Keep only the resource-only patch
+# that has no signature dependency, so the build still produces an APK.
++ Override certificate pinning
+
 - Hide layout components
+- Hide upgrade promotions
+- M3E loading indicator
+- Material 3 switches
+- Remove 'Sent from' signature
+- Remove free accounts limit
+- Scheduled Trash and Spam deletion
+- Swipe to switch accounts
+- Unlock custom time picker
 - AMOLED dark theme
 - Custom accent color
