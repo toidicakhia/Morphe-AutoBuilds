@@ -210,6 +210,9 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     if app_name == "proton-mail":
         import hashlib
         logging.info(f"[diag] proton-mail input SHA256: {hashlib.sha256(input_apk.read_bytes()).hexdigest()}")
+        for diag_path in (Path(cli), Path(patches)):
+            if diag_path.exists():
+                logging.info(f"[diag] {diag_path.name} SHA256: {hashlib.sha256(diag_path.read_bytes()).hexdigest()}")
 
     # Try the downloaded version first, then (if available) older compatible
     # versions from the patch set. This prevents a single bad/overstated
