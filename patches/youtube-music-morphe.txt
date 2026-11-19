@@ -1,1 +1,1 @@
--AddResourcesPatch
+# Updated: removed obsolete "-AddResourcesPatch" (not present in MorpheApp/morphe-patches v2.3.0).

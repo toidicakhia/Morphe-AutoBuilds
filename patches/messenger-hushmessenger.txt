@@ -1,1 +1,1 @@
-- Hide inbox ads
+# Updated: removed obsolete "- Hide inbox ads" (not present in SysAdminDoc/HushMessenger v0.30.0).
