@@ -195,23 +195,18 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         logging.error("All download sources failed. Skipping this app.")
         return None
 
-    def presign_if_unsigned(apk_path: Path) -> Path:
-        # Mirrors sometimes serve unsigned APKs. Patches that read the stock
-        # signing certificate (e.g. proton-mail's SpoofSignaturePatch) abort
-        # on them, so give the patcher a signed base to work with.
-        if app_name != "proton-mail":
+    def safe_input_name(apk_path: Path) -> Path:
+        # Mirror filenames can contain ':' (e.g. "Proton+Mail:+Encrypted+Email.apk").
+        # The patcher treats such a path as a URI scheme on Linux and then
+        # reports "the app being patched is not signed". Give it a plain name.
+        safe = Path(f"{app_name}-{arch}-input.apk")
+        if apk_path.name == safe.name:
             return apk_path
-        signer = utils.find_apksigner()
-        if not signer:
-            return apk_path
-        # Mirror copies of Proton Mail carry a signature the patcher cannot
-        # read (it reports "app being patched is not signed" even though
-        # apksigner verifies the file). Always replace it with a signature
-        # produced by our own keystore before patching.
-        logging.warning("Re-signing Proton Mail base APK with the public keystore")
-        return utils.presign_unsigned_apk(apk_path, signer)
+        safe.unlink(missing_ok=True)
+        shutil.copy2(apk_path, safe)
+        return safe
 
-    input_apk = presign_if_unsigned(input_apk)
+    input_apk = safe_input_name(input_apk)
 
     # Try the downloaded version first, then (if available) older compatible
     # versions from the patch set. This prevents a single bad/overstated
@@ -262,7 +257,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if input_apk is None:
                 logging.warning(f"Re-downloaded APK for {ver} is unusable; trying next version")
                 continue
-            input_apk = presign_if_unsigned(input_apk)
+            input_apk = safe_input_name(input_apk)
             version = ver
 
         # --- Normalize/merge input into .apk when needed ---

@@ -696,58 +696,6 @@ def store_native_libs(apk_path: Path) -> None:
         temp_zip.unlink(missing_ok=True)
 
 
-def apk_is_signed(apk_path: Path, apksigner: str) -> bool:
-    """True when the APK carries a V1/JAR signature.
-
-    Morphe's patcher reads the signing certificate through ``META-INF/*.RSA``
-    (V1). Mirrors often ship APKs signed only with the V2/V3 APK Signature
-    Scheme: apksigner verifies them fine, but the patcher reports "app being
-    patched is not signed". Check the archive directly so those get re-signed.
-    """
-    try:
-        with zipfile.ZipFile(apk_path) as zf:
-            return any(
-                name.upper().startswith("META-INF/")
-                and name.upper().endswith((".RSA", ".DSA", ".EC"))
-                for name in zf.namelist()
-            )
-    except Exception:
-        return False
-
-
-def presign_unsigned_apk(apk_path: Path, apksigner: str) -> Path:
-    """Align and sign an unsigned base APK with the public keystore.
-
-    Some mirrors (notably the Uptodown-backed APKPure API) hand out APKs with
-    no signing block. Patch sets whose SpoofSignature patch reads the stock
-    certificate (e.g. proton-mail) abort on such input. Signing the base APK
-    up front gives those patches a readable certificate; the final output is
-    still re-signed by run_build with the same keystore.
-    """
-    aligned = apk_path.with_name(apk_path.stem + "-presign-aligned.apk")
-    shutil.copy2(apk_path, aligned)
-    zipalign_apk(aligned, apksigner)
-    signed = apk_path.with_name(apk_path.stem + "-presigned.apk")
-    try:
-        run_process([
-            str(apksigner), "sign", "--verbose",
-            "--v1-signing-enabled", "true",
-            "--ks", "keystore/public.jks",
-            "--ks-pass", "pass:public",
-            "--key-pass", "pass:public",
-            "--ks-key-alias", "public",
-            "--in", str(aligned), "--out", str(signed),
-        ], capture=True, stream=True)
-    except Exception:
-        aligned.unlink(missing_ok=True)
-        signed.unlink(missing_ok=True)
-        raise
-    aligned.unlink(missing_ok=True)
-    apk_path.unlink(missing_ok=True)
-    signed.replace(apk_path)
-    return apk_path
-
-
 def zipalign_apk(apk_path: Path, apksigner: str) -> None:
     """Align an unsigned APK for 16 KB pages, replacing it with the aligned file.
 
