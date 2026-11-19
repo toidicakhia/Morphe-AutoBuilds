@@ -202,9 +202,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         if app_name != "proton-mail":
             return apk_path
         signer = utils.find_apksigner()
-        if not signer or utils.apk_is_signed(apk_path, signer):
+        if not signer:
             return apk_path
-        logging.warning("Base APK is unsigned; pre-signing with the public keystore")
+        # Mirror copies of Proton Mail carry a signature the patcher cannot
+        # read (it reports "app being patched is not signed" even though
+        # apksigner verifies the file). Always replace it with a signature
+        # produced by our own keystore before patching.
+        logging.warning("Re-signing Proton Mail base APK with the public keystore")
         return utils.presign_unsigned_apk(apk_path, signer)
 
     input_apk = presign_if_unsigned(input_apk)

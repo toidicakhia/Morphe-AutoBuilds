@@ -697,13 +697,20 @@ def store_native_libs(apk_path: Path) -> None:
 
 
 def apk_is_signed(apk_path: Path, apksigner: str) -> bool:
-    """True when apksigner can verify a signing certificate on the APK."""
+    """True when the APK carries a V1/JAR signature.
+
+    Morphe's patcher reads the signing certificate through ``META-INF/*.RSA``
+    (V1). Mirrors often ship APKs signed only with the V2/V3 APK Signature
+    Scheme: apksigner verifies them fine, but the patcher reports "app being
+    patched is not signed". Check the archive directly so those get re-signed.
+    """
     try:
-        run_process(
-            [str(apksigner), "verify", "--print-certs", "--min-sdk-version", "21", str(apk_path)],
-            capture=True,
-        )
-        return True
+        with zipfile.ZipFile(apk_path) as zf:
+            return any(
+                name.upper().startswith("META-INF/")
+                and name.upper().endswith((".RSA", ".DSA", ".EC"))
+                for name in zf.namelist()
+            )
     except Exception:
         return False
 
@@ -724,6 +731,7 @@ def presign_unsigned_apk(apk_path: Path, apksigner: str) -> Path:
     try:
         run_process([
             str(apksigner), "sign", "--verbose",
+            "--v1-signing-enabled", "true",
             "--ks", "keystore/public.jks",
             "--ks-pass", "pass:public",
             "--key-pass", "pass:public",
