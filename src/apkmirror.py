@@ -579,6 +579,17 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         elif c_dpi not in r:
             return False
 
+        # Some apps ship several builds of the same version for different
+        # Android API levels (e.g. Facebook's Android 9+ and Android 11+
+        # arm64-v8a bundles). Only the newer build is readable by the patch
+        # set, so configs can require/exclude literal row text to pick it.
+        required = (config.get('variant_require') or '').lower()
+        if required and required not in r:
+            return False
+        excluded = (config.get('variant_exclude') or '').lower()
+        if excluded and excluded in r:
+            return False
+
         return True
 
     # Helper to find download link in a row

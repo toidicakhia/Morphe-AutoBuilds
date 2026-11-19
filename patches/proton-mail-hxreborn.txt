@@ -1,2 +1,5 @@
+# Updated: exclude "Hide layout components" - its SpoofSignature dependency fails
+# when the base APK has no readable signing certificate (unsigned mirror build).
+- Hide layout components
 - AMOLED dark theme
 - Custom accent color
