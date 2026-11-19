@@ -195,6 +195,20 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         logging.error("All download sources failed. Skipping this app.")
         return None
 
+    def presign_if_unsigned(apk_path: Path) -> Path:
+        # Mirrors sometimes serve unsigned APKs. Patches that read the stock
+        # signing certificate (e.g. proton-mail's SpoofSignaturePatch) abort
+        # on them, so give the patcher a signed base to work with.
+        if app_name != "proton-mail":
+            return apk_path
+        signer = utils.find_apksigner()
+        if not signer or utils.apk_is_signed(apk_path, signer):
+            return apk_path
+        logging.warning("Base APK is unsigned; pre-signing with the public keystore")
+        return utils.presign_unsigned_apk(apk_path, signer)
+
+    input_apk = presign_if_unsigned(input_apk)
+
     # Try the downloaded version first, then (if available) older compatible
     # versions from the patch set. This prevents a single bad/overstated
     # compatibility entry from breaking the whole build.
@@ -244,6 +258,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if input_apk is None:
                 logging.warning(f"Re-downloaded APK for {ver} is unusable; trying next version")
                 continue
+            input_apk = presign_if_unsigned(input_apk)
             version = ver
 
         # --- Normalize/merge input into .apk when needed ---
